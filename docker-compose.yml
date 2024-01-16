@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+  mariadb-master:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    networks:
+      - mariadb-network
+    command: --server-id=1 --log-bin --binlog-format=row
+    volumes:
+      - ./data/master:/var/lib/mysql
+
+  mariadb-replica:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_MASTER_HOST: mariadb-master
+      MYSQL_MASTER_PORT: 3306
+      MYSQL_MASTER_ROOT_PASSWORD: root_password
+    networks:
+      - mariadb-network
+    depends_on:
+      - mariadb-master
+    command: --server-id=2 --log-bin --binlog-format=row
+    volumes:
+      - ./data/replica:/var/lib/mysql
+
+networks:
+  mariadb-network:
+    driver: bridge
